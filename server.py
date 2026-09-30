@@ -6,38 +6,76 @@ clients = set()
 
 
 async def handler(websocket):
+
     clients.add(websocket)
-    print("Player connected!")
+
+    print("PLAYER CONNECTED")
+    print("Players:", len(clients))
 
     try:
+
         async for message in websocket:
-            print("Message:", message)
+
+            print("MESSAGE:", message)
+
+            disconnected = set()
 
             for client in clients.copy():
-                try:
-                    await client.send(message)
-                except:
-                    clients.discard(client)
 
-    except websockets.exceptions.ConnectionClosed:
-        pass
+                try:
+
+                    await client.send(message)
+
+                except Exception as e:
+
+                    print("SEND ERROR:", e)
+
+                    disconnected.add(client)
+
+            for client in disconnected:
+
+                clients.discard(client)
+
+
+    except websockets.exceptions.ConnectionClosed as e:
+
+        print("Connection closed:", e)
+
+
+    except Exception as e:
+
+        print("CLIENT ERROR:", e)
+
 
     finally:
+
         clients.discard(websocket)
-        print("Player disconnected!")
+
+        print("PLAYER DISCONNECTED")
+        print("Players:", len(clients))
 
 
 async def main():
-    port = int(os.environ.get("PORT", 8765))
 
+    port = int(
+        os.environ.get(
+            "PORT",
+            8765
+        )
+    )
+
+    print("================================")
     print("CHAT SERVER STARTED")
-    print("Port:", port)
+    print("PORT:", port)
+    print("================================")
+
 
     async with websockets.serve(
         handler,
         "0.0.0.0",
         port
     ):
+
         await asyncio.Future()
 
 
